@@ -33,8 +33,8 @@ export type ToolInvocations = {
   result: any;
 }[];
 
-async function sendMessage(input: string) {
-  'use server';
+async function chatWorkflow(input: string) {
+  "use workflow";
 
   const history = getMutableAIState<typeof AI>();
   history.update({
@@ -96,7 +96,7 @@ async function sendMessage(input: string) {
 
 export const AI = createAI<AIState, UIState>({
   actions: {
-    sendMessage,
+    sendMessage: chatWorkflow,
   },
   initialUIState: [],
   initialAIState: { chatId: nanoid(), messages: [] },
