@@ -4,11 +4,24 @@ import { useState } from 'react';
 import { X, Send } from 'lucide-react';
 
 interface Flight {
-  id: string;
-  airline: string;
-  departure: string;
-  arrival: string;
-  price: number;
+  flight_date: string;
+  flight_status: string;
+  departure: {
+    airport: string;
+    iata: string;
+    scheduled: string;
+  };
+  arrival: {
+    airport: string;
+    iata: string;
+    scheduled: string;
+  };
+  airline: {
+    name: string;
+  };
+  flight: {
+    number: string;
+  };
 }
 
 interface ChatMessage {
@@ -24,36 +37,7 @@ interface BookingData {
   flightId?: string;
 }
 
-const mockFlights: Flight[] = [
-  {
-    id: '1',
-    airline: 'SkyAir Express',
-    departure: '08:30 AM',
-    arrival: '12:45 PM',
-    price: 299,
-  },
-  {
-    id: '2',
-    airline: 'CloudWings',
-    departure: '11:15 AM',
-    arrival: '03:30 PM',
-    price: 349,
-  },
-  {
-    id: '3',
-    airline: 'AeroVelocity',
-    departure: '02:00 PM',
-    arrival: '06:15 PM',
-    price: 279,
-  },
-  {
-    id: '4',
-    airline: 'JetStream Pro',
-    departure: '05:45 PM',
-    arrival: '10:00 PM',
-    price: 329,
-  },
-];
+const BOT_GREETING = 'Hello! I am your flight booking assistant. Where would you like to fly from? (e.g., SFO)';
 
 export default function FlightBookingModal() {
   const [isOpen, setIsOpen] = useState(false);
@@ -61,7 +45,7 @@ export default function FlightBookingModal() {
     {
       id: '1',
       type: 'bot',
-      content: 'Hello! Welcome to Flight Booking Assistant. How can I help you today?',
+      content: BOT_GREETING,
     },
   ]);
   const [inputValue, setInputValue] = useState('');
@@ -73,8 +57,12 @@ export default function FlightBookingModal() {
   });
   const [confirmationNumber, setConfirmationNumber] = useState<string | null>(null);
   const [showFlightResults, setShowFlightResults] = useState(false);
+  const [conversationState, setConversationState] = useState('get_origin');
+  const [origin, setOrigin] = useState('');
+  const [destination, setDestination] = useState('');
+  const [flights, setFlights] = useState<Flight[]>([]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
 
     const userMessage: ChatMessage = {
@@ -85,18 +73,69 @@ export default function FlightBookingModal() {
 
     setMessages((prev) => [...prev, userMessage]);
 
-    // Simulate bot response
-    setTimeout(() => {
-      const botMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        type: 'bot',
-        content:
-          "I found available flights for you! Please check the flight options on the right panel.",
-      };
-      setMessages((prev) => [...prev, botMessage]);
-      setShowFlightResults(true);
-    }, 500);
+    let botMessage: ChatMessage;
 
+    switch (conversationState) {
+      case 'get_origin':
+        setOrigin(inputValue);
+        botMessage = {
+          id: (Date.now() + 1).toString(),
+          type: 'bot',
+          content: `Great! And where are you flying to? (e.g., JFK)`,
+        };
+        setConversationState('get_destination');
+        break;
+      case 'get_destination':
+        setDestination(inputValue);
+        botMessage = {
+          id: (Date.now() + 1).toString(),
+          type: 'bot',
+          content: `Got it. When would you like to travel? (e.g., YYYY-MM-DD)`,
+        };
+        setConversationState('get_date');
+        break;
+      case 'get_date':
+        const date = inputValue;
+        try {
+          const response = await fetch('/flight-booking/api/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ origin, destination, date }),
+          });
+          const data = await response.json();
+          if (data.data) {
+            setFlights(data.data);
+            botMessage = {
+              id: (Date.now() + 1).toString(),
+              type: 'bot',
+              content: "I found available flights for you! Please check the flight options on the right panel.",
+            };
+            setShowFlightResults(true);
+            setConversationState('show_flights');
+          } else {
+            botMessage = {
+              id: (Date.now() + 1).toString(),
+              type: 'bot',
+              content: "Sorry, I couldn't find any flights for the given details.",
+            };
+          }
+        } catch (error) {
+          botMessage = {
+            id: (Date.now() + 1).toString(),
+            type: 'bot',
+            content: "Sorry, something went wrong while searching for flights.",
+          };
+        }
+        break;
+      default:
+        botMessage = {
+          id: (Date.now() + 1).toString(),
+          type: 'bot',
+          content: "Sorry, I didn't understand that. You can view the available flights on the right.",
+        };
+        break;
+    }
+    setMessages((prev) => [...prev, botMessage]);
     setInputValue('');
   };
 
@@ -105,11 +144,12 @@ export default function FlightBookingModal() {
     const botMessage: ChatMessage = {
       id: Date.now().toString(),
       type: 'bot',
-      content: `Great! You selected ${flight.airline}. Please fill in your booking details.`,
+      content: `Great! You selected a flight with ${flight.airline.name}. Please fill in your booking details.`,
     };
     setMessages((prev) => [...prev, botMessage]);
   };
-
+  
+  // ... rest of the component remains the same
   const handleInputChange = (field: keyof BookingData, value: string) => {
     setBookingData((prev) => ({ ...prev, [field]: value }));
   };
@@ -135,15 +175,16 @@ export default function FlightBookingModal() {
     setBookingData({ name: '', email: '', phone: '' });
     setConfirmationNumber(null);
     setShowFlightResults(false);
+    setConversationState('get_origin');
     setMessages([
       {
         id: '1',
         type: 'bot',
-        content: 'Hello! Welcome to Flight Booking Assistant. How can I help you today?',
+        content: BOT_GREETING,
       },
     ]);
   };
-
+  
   return (
     <>
       {/* Open Button */}
@@ -234,16 +275,13 @@ export default function FlightBookingModal() {
                   </div>
                   <div className="mt-4 rounded-lg bg-white p-4 text-sm">
                     <p>
-                      <strong>Airline:</strong> {selectedFlight?.airline}
+                      <strong>Airline:</strong> {selectedFlight?.airline.name}
                     </p>
                     <p>
-                      <strong>Departure:</strong> {selectedFlight?.departure}
+                      <strong>Departure:</strong> {selectedFlight?.departure.scheduled}
                     </p>
                     <p>
-                      <strong>Arrival:</strong> {selectedFlight?.arrival}
-                    </p>
-                    <p>
-                      <strong>Price:</strong> ${selectedFlight?.price}
+                      <strong>Arrival:</strong> {selectedFlight?.arrival.scheduled}
                     </p>
                   </div>
                   <button
@@ -260,12 +298,11 @@ export default function FlightBookingModal() {
                 <div className="flex flex-1 flex-col gap-4">
                   <div className="rounded-lg bg-white p-4 text-sm">
                     <p className="text-gray-600">
-                      <strong>{selectedFlight.airline}</strong>
+                      <strong>{selectedFlight.airline.name}</strong>
                     </p>
                     <p className="text-gray-600">
-                      {selectedFlight.departure} → {selectedFlight.arrival}
+                      {selectedFlight.departure.iata} → {selectedFlight.arrival.iata}
                     </p>
-                    <p className="text-lg font-bold text-blue-600">${selectedFlight.price}</p>
                   </div>
 
                   <div className="flex flex-1 flex-col gap-3">
@@ -314,17 +351,17 @@ export default function FlightBookingModal() {
               {/* Flights List */}
               {!selectedFlight && !confirmationNumber && showFlightResults && (
                 <div className="flex flex-1 flex-col gap-3 overflow-y-auto">
-                  {mockFlights.map((flight) => (
+                  {flights.map((flight, index) => (
                     <div
-                      key={flight.id}
+                      key={index}
                       className="rounded-lg bg-white p-4 shadow-sm transition-all hover:shadow-md"
                     >
-                      <p className="font-semibold text-gray-800">{flight.airline}</p>
+                      <p className="font-semibold text-gray-800">{flight.airline.name}</p>
                       <p className="text-sm text-gray-600">
-                        {flight.departure} → {flight.arrival}
+                        {flight.departure.iata} → {flight.arrival.iata}
                       </p>
                       <div className="mt-3 flex items-center justify-between">
-                        <p className="text-lg font-bold text-blue-600">${flight.price}</p>
+                        <p className="text-lg font-bold text-blue-600">Check Price</p>
                         <button
                           onClick={() => handleSelectFlight(flight)}
                           className="rounded-lg bg-blue-500 px-4 py-1 text-sm font-semibold text-white transition-all hover:bg-blue-600 active:scale-95"
