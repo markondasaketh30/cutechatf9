@@ -343,17 +343,18 @@ const PurePreviewMessage = ({
               );
             }
 
-            if (type === "tool-generateQuiz") {
-              const { toolCallId, state } = part;
+            if ((type as string) === "tool-generateQuiz") {
+              const quizPart = part as any;
+              const { toolCallId, state } = quizPart;
 
               if (state === "output-available") {
-                if (part.output && "error" in part.output) {
+                if (quizPart.output && "error" in quizPart.output) {
                   return (
                     <div
                       className="w-full max-w-2xl rounded-lg border border-red-200 bg-red-50 p-4 text-red-500 dark:bg-red-950/50"
                       key={toolCallId}
                     >
-                      Error generating quiz: {String(part.output.error)}
+                      Error generating quiz: {String(quizPart.output.error)}
                     </div>
                   );
                 }
@@ -361,10 +362,10 @@ const PurePreviewMessage = ({
                 return (
                   <QuizResult
                     key={toolCallId}
-                    quizId={part.output?.id}
-                    title={part.output?.title}
-                    questionCount={part.output?.questionCount}
-                    quiz={part.output?.quiz}
+                    quizId={quizPart.output?.id}
+                    title={quizPart.output?.title}
+                    questionCount={quizPart.output?.questionCount}
+                    quiz={quizPart.output?.quiz}
                   />
                 );
               }
@@ -375,7 +376,7 @@ const PurePreviewMessage = ({
                   <ToolContent>
                     {(state === "input-available" || state === "streaming") && (
                       <div className="px-4 py-3">
-                        <ToolInput input={part.input} />
+                        <ToolInput input={quizPart.input} />
                         {state === "streaming" && (
                           <div className="mt-2 flex items-center gap-2 text-muted-foreground text-sm">
                             <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />

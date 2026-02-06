@@ -103,8 +103,8 @@ type CodeBlockProps = HTMLAttributes<HTMLDivElement> & {
 
 interface TokenizedCode {
   tokens: ThemedToken[][];
-  fg: string;
-  bg: string;
+  fg?: string;
+  bg?: string;
 }
 
 interface CodeBlockContextType {
@@ -496,7 +496,6 @@ export const CodeBlockLanguageSelectorTrigger = ({
       "h-7 border-none bg-transparent px-2 text-xs shadow-none",
       className
     )}
-    size="sm"
     {...props}
   />
 );

@@ -30,7 +30,7 @@ export const generateQuiz = ({ session, dataStream }: GenerateQuizProps) =>
       const id = generateUUID();
 
       // Signal that we're generating a quiz
-      dataStream.write({
+      (dataStream as any).write({
         type: "data-quiz-start",
         data: { id, pdfUrl },
         transient: true,
@@ -56,7 +56,7 @@ export const generateQuiz = ({ session, dataStream }: GenerateQuizProps) =>
                 {
                   type: "file",
                   data: pdfBase64,
-                  mimeType: "application/pdf",
+                  mediaType: "application/pdf",
                 },
                 {
                   type: "text",
@@ -82,12 +82,12 @@ Generate the quiz now.`,
         const quiz = await result.object;
 
         // Write the quiz data to the stream
-        dataStream.write({
+        (dataStream as any).write({
           type: "data-quiz",
           data: { id, quiz },
         });
 
-        dataStream.write({
+        (dataStream as any).write({
           type: "data-quiz-finish",
           data: { id },
           transient: true,
@@ -101,7 +101,7 @@ Generate the quiz now.`,
           content: `Quiz "${quiz.title}" has been generated with ${quiz.questions.length} questions. The user can now take the quiz.`,
         };
       } catch (error) {
-        dataStream.write({
+        (dataStream as any).write({
           type: "data-quiz-error",
           data: { id, error: error instanceof Error ? error.message : "Failed to generate quiz" },
           transient: true,

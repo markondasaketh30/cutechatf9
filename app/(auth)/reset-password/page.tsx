@@ -3,7 +3,7 @@
 import Form from "next/form";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useActionState, useEffect, useState } from "react";
+import { Suspense, useActionState, useEffect, useState } from "react";
 
 import { SubmitButton } from "@/components/submit-button";
 import { toast } from "@/components/toast";
@@ -15,6 +15,14 @@ import {
 } from "../password-reset/actions";
 
 export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div className="flex h-dvh w-screen items-center justify-center">Loading...</div>}>
+      <ResetPasswordContent />
+    </Suspense>
+  );
+}
+
+function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
