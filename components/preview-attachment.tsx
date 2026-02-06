@@ -1,7 +1,7 @@
 import Image from "next/image";
 import type { Attachment } from "@/lib/types";
 import { Loader } from "./elements/loader";
-import { CrossSmallIcon } from "./icons";
+import { CrossSmallIcon, FileTextIcon } from "./icons";
 import { Button } from "./ui/button";
 
 export const PreviewAttachment = ({
@@ -28,6 +28,11 @@ export const PreviewAttachment = ({
           src={url}
           width={64}
         />
+      ) : contentType === "application/pdf" ? (
+        <div className="flex size-full flex-col items-center justify-center gap-1 text-muted-foreground">
+          <FileTextIcon size={24} />
+          <span className="text-[10px]">PDF</span>
+        </div>
       ) : (
         <div className="flex size-full items-center justify-center text-muted-foreground text-xs">
           File

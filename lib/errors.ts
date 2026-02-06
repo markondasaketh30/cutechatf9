@@ -16,7 +16,9 @@ export type Surface =
   | "vote"
   | "document"
   | "suggestions"
-  | "activate_gateway";
+  | "activate_gateway"
+  | "session"
+  | "password_reset";
 
 export type ErrorCode = `${ErrorType}:${Surface}`;
 
@@ -33,6 +35,8 @@ export const visibilityBySurface: Record<Surface, ErrorVisibility> = {
   document: "response",
   suggestions: "response",
   activate_gateway: "response",
+  session: "response",
+  password_reset: "response",
 };
 
 export class ChatSDKError extends Error {
@@ -59,11 +63,7 @@ export class ChatSDKError extends Error {
     const { message, cause, statusCode } = this;
 
     if (visibility === "log") {
-      console.error({
-        code,
-        message,
-        cause,
-      });
+      console.error("[ChatSDKError]", JSON.stringify({ code, message, cause }));
 
       return Response.json(
         { code: "", message: "Something went wrong. Please try again later." },
@@ -111,6 +111,26 @@ export function getMessageByErrorCode(errorCode: ErrorCode): string {
       return "You need to sign in to view this document. Please sign in and try again.";
     case "bad_request:document":
       return "The request to create or update the document was invalid. Please check your input and try again.";
+
+    // Session errors
+    case "unauthorized:session":
+      return "Your session has expired. Please sign in again.";
+    case "not_found:session":
+      return "Session not found. Please sign in again.";
+    case "bad_request:session":
+      return "Invalid session request. Please try again.";
+
+    // Password reset errors
+    case "bad_request:password_reset":
+      return "Unable to process password reset request. Please try again.";
+    case "not_found:password_reset":
+      return "Password reset token not found or expired. Please request a new one.";
+    case "rate_limit:password_reset":
+      return "Too many password reset attempts. Please try again later.";
+
+    // Rate limit errors
+    case "rate_limit:auth":
+      return "Too many login attempts. Please try again later.";
 
     default:
       return "Something went wrong. Please try again later.";

@@ -1,0 +1,557 @@
+{
+  "info": {
+    "name": "CuteChat F9 API",
+    "_postman_id": "cutechat-f9-collection",
+    "description": "Complete API collection for CuteChat F9 - AI-powered chat application with authentication, real-time streaming, file uploads, and more.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "chat_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "message_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "document_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "session_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "csrf_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Fetch CSRF token before authenticated requests",
+          "if (!pm.variables.get('csrf_token')) {",
+          "    pm.sendRequest({",
+          "        url: pm.variables.get('base_url') + '/api/auth/csrf',",
+          "        method: 'GET'",
+          "    }, function (err, res) {",
+          "        if (!err && res) {",
+          "            var data = res.json();",
+          "            pm.variables.set('csrf_token', data.csrfToken);",
+          "        }",
+          "    });",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Authentication endpoints including login, registration, guest access, and password reset.",
+      "item": [
+        {
+          "name": "Login (Credentials)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "email", "value": "user@example.com" },
+                { "key": "password", "value": "Password123!" },
+                { "key": "csrfToken", "value": "{{csrf_token}}" },
+                { "key": "redirect", "value": "false" }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/callback/credentials",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "callback", "credentials"]
+            },
+            "description": "Login with email and password. Rate limited to 5 requests per 15 minutes."
+          }
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newuser@example.com\",\n  \"password\": \"SecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/register",
+              "host": ["{{base_url}}"],
+              "path": ["register"]
+            },
+            "description": "Register a new account. Server action via form submission. Rate limited to 5 requests per 60 minutes."
+          }
+        },
+        {
+          "name": "Guest Login",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/auth/guest?redirectUrl=/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "guest"],
+              "query": [
+                { "key": "redirectUrl", "value": "/" }
+              ]
+            },
+            "description": "Sign in as a guest user. Redirects to the specified URL after authentication."
+          }
+        },
+        {
+          "name": "Get Session",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/auth/session",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "session"]
+            },
+            "description": "Get the current authenticated session info."
+          }
+        },
+        {
+          "name": "Get CSRF Token",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/auth/csrf",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "csrf"]
+            },
+            "description": "Fetch a CSRF token for use in subsequent requests."
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "logout"]
+            },
+            "description": "Sign out the current user from the current session."
+          }
+        },
+        {
+          "name": "Logout All Sessions",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/logout?all=true",
+              "host": ["{{base_url}}"],
+              "path": ["api", "logout"],
+              "query": [
+                { "key": "all", "value": "true" }
+              ]
+            },
+            "description": "Sign out the user from all active sessions."
+          }
+        },
+        {
+          "name": "Request Password Reset",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/forgot-password",
+              "host": ["{{base_url}}"],
+              "path": ["forgot-password"]
+            },
+            "description": "Request a password reset email. Rate limited to 3 requests per 60 minutes. Server action."
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"reset-token-from-email\",\n  \"password\": \"NewSecurePass123!\",\n  \"confirmPassword\": \"NewSecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/reset-password",
+              "host": ["{{base_url}}"],
+              "path": ["reset-password"]
+            },
+            "description": "Reset password using the token from the password reset email. Token expires in 1 hour. Server action."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sessions",
+      "description": "Session management endpoints for viewing and revoking active sessions.",
+      "item": [
+        {
+          "name": "Get Active Sessions",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/sessions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions"]
+            },
+            "description": "Get all active sessions for the current user. Returns session metadata without tokens."
+          }
+        },
+        {
+          "name": "Revoke Session",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/sessions?id={{session_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions"],
+              "query": [
+                { "key": "id", "value": "{{session_id}}" }
+              ]
+            },
+            "description": "Revoke a specific session by its ID. The session must belong to the current user."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chat",
+      "description": "Chat endpoints for creating messages and managing conversations.",
+      "item": [
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{chat_id}}\",\n  \"message\": {\n    \"id\": \"msg-uuid-here\",\n    \"role\": \"user\",\n    \"parts\": [\n      {\n        \"type\": \"text\",\n        \"text\": \"Hello, how are you?\"\n      }\n    ]\n  },\n  \"selectedChatModel\": \"chat-model-small\",\n  \"selectedVisibilityType\": \"private\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/chat",
+              "host": ["{{base_url}}"],
+              "path": ["api", "chat"]
+            },
+            "description": "Send a message and receive a streamed AI response via SSE. Rate limited to 60 requests per minute. Supports text and file attachments."
+          }
+        },
+        {
+          "name": "Delete Chat",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/chat?id={{chat_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "chat"],
+              "query": [
+                { "key": "id", "value": "{{chat_id}}" }
+              ]
+            },
+            "description": "Delete a specific chat by ID. The chat must belong to the current user."
+          }
+        }
+      ]
+    },
+    {
+      "name": "History",
+      "description": "Chat history endpoints with cursor-based pagination.",
+      "item": [
+        {
+          "name": "Get Chat History",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/history?limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "history"],
+              "query": [
+                { "key": "limit", "value": "10" },
+                { "key": "starting_after", "value": "", "disabled": true },
+                { "key": "ending_before", "value": "", "disabled": true }
+              ]
+            },
+            "description": "Get chat history with cursor-based pagination. Use starting_after or ending_before for pagination (not both)."
+          }
+        },
+        {
+          "name": "Delete All Chats",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/history",
+              "host": ["{{base_url}}"],
+              "path": ["api", "history"]
+            },
+            "description": "Delete all chats for the current user."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Files",
+      "description": "File upload endpoint supporting images and PDFs.",
+      "item": [
+        {
+          "name": "Upload File",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "File to upload (JPEG, PNG, or PDF, max 10MB)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/files/upload",
+              "host": ["{{base_url}}"],
+              "path": ["api", "files", "upload"]
+            },
+            "description": "Upload a file. Accepted types: image/jpeg, image/png, application/pdf. Max size: 10MB. Stored in Vercel Blob."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Votes",
+      "description": "Message voting/feedback endpoints.",
+      "item": [
+        {
+          "name": "Get Votes for Chat",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/vote?chatId={{chat_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "vote"],
+              "query": [
+                { "key": "chatId", "value": "{{chat_id}}" }
+              ]
+            },
+            "description": "Get all votes for messages in a specific chat."
+          }
+        },
+        {
+          "name": "Vote on Message",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatId\": \"{{chat_id}}\",\n  \"messageId\": \"{{message_id}}\",\n  \"type\": \"up\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/vote",
+              "host": ["{{base_url}}"],
+              "path": ["api", "vote"]
+            },
+            "description": "Vote on a message. Type can be 'up' or 'down'. Upserts the vote."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Messages",
+      "description": "Message read receipt endpoints.",
+      "item": [
+        {
+          "name": "Mark Chat as Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chatId\": \"{{chat_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/messages/read",
+              "host": ["{{base_url}}"],
+              "path": ["api", "messages", "read"]
+            },
+            "description": "Mark all messages in a chat as read."
+          }
+        },
+        {
+          "name": "Mark Message as Read",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messageId\": \"{{message_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/messages/read",
+              "host": ["{{base_url}}"],
+              "path": ["api", "messages", "read"]
+            },
+            "description": "Mark a single message as read."
+          }
+        },
+        {
+          "name": "Get Unread Count",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/messages/read",
+              "host": ["{{base_url}}"],
+              "path": ["api", "messages", "read"]
+            },
+            "description": "Get the total unread message count for the current user."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Documents",
+      "description": "Document CRUD endpoints for text, code, images, and sheets.",
+      "item": [
+        {
+          "name": "Get Document",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/document?id={{document_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "document"],
+              "query": [
+                { "key": "id", "value": "{{document_id}}" }
+              ]
+            },
+            "description": "Get a document by ID. Returns all versions of the document."
+          }
+        },
+        {
+          "name": "Save Document",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Document content here\",\n  \"title\": \"My Document\",\n  \"kind\": \"text\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/document?id={{document_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "document"],
+              "query": [
+                { "key": "id", "value": "{{document_id}}" }
+              ]
+            },
+            "description": "Save or update a document. Kind can be: text, code, image, sheet."
+          }
+        },
+        {
+          "name": "Delete Document Version",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/document?id={{document_id}}&timestamp=2024-01-01T00:00:00.000Z",
+              "host": ["{{base_url}}"],
+              "path": ["api", "document"],
+              "query": [
+                { "key": "id", "value": "{{document_id}}" },
+                { "key": "timestamp", "value": "2024-01-01T00:00:00.000Z" }
+              ]
+            },
+            "description": "Delete document versions after a specific timestamp."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Suggestions",
+      "description": "AI-generated suggestions for documents.",
+      "item": [
+        {
+          "name": "Get Suggestions",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/suggestions?documentId={{document_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "suggestions"],
+              "query": [
+                { "key": "documentId", "value": "{{document_id}}" }
+              ]
+            },
+            "description": "Get AI-generated suggestions for a specific document."
+          }
+        }
+      ]
+    }
+  ]
+}

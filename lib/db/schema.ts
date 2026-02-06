@@ -2,6 +2,7 @@ import type { InferSelectModel } from "drizzle-orm";
 import {
   boolean,
   foreignKey,
+  integer,
   json,
   pgTable,
   primaryKey,
@@ -15,6 +16,11 @@ export const user = pgTable("User", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   email: varchar("email", { length: 64 }).notNull(),
   password: varchar("password", { length: 64 }),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  lastLoginAt: timestamp("lastLoginAt"),
+  failedLoginAttempts: integer("failedLoginAttempts").notNull().default(0),
+  lockedUntil: timestamp("lockedUntil"),
 });
 
 export type User = InferSelectModel<typeof user>;
@@ -56,6 +62,9 @@ export const message = pgTable("Message_v2", {
   parts: json("parts").notNull(),
   attachments: json("attachments").notNull(),
   createdAt: timestamp("createdAt").notNull(),
+  messageType: varchar("messageType", { length: 20 }).notNull().default("text"),
+  readAt: timestamp("readAt"),
+  deliveredAt: timestamp("deliveredAt"),
 });
 
 export type DBMessage = InferSelectModel<typeof message>;
@@ -168,3 +177,48 @@ export const stream = pgTable(
 );
 
 export type Stream = InferSelectModel<typeof stream>;
+
+// Password Reset Token table for password recovery
+export const passwordResetToken = pgTable("PasswordResetToken", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  token: varchar("token", { length: 64 }).notNull().unique(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  usedAt: timestamp("usedAt"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type PasswordResetToken = InferSelectModel<typeof passwordResetToken>;
+
+// User Session table for session management
+export const userSession = pgTable("UserSession", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  sessionToken: varchar("sessionToken", { length: 255 }).notNull().unique(),
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  userAgent: text("userAgent"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  lastActivityAt: timestamp("lastActivityAt").notNull().defaultNow(),
+});
+
+export type UserSession = InferSelectModel<typeof userSession>;
+
+// Activity Log table for tracking user actions
+export const activityLog = pgTable("ActivityLog", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  action: varchar("action", { length: 50 }).notNull(),
+  metadata: json("metadata"),
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  userAgent: text("userAgent"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
+export type ActivityLog = InferSelectModel<typeof activityLog>;

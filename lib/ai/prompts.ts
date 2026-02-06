@@ -41,6 +41,24 @@ export const regularPrompt = `You are a friendly assistant! Keep your responses 
 
 When asked to write, create, or help with something, just do it directly. Don't ask clarifying questions unless absolutely necessary - make reasonable assumptions and proceed with the task.`;
 
+export const quizPrompt = `
+**PDF Quiz Generation:**
+When a user uploads a PDF file and asks for a quiz, test, or questions about the content:
+- Use the \`generateQuiz\` tool to create an interactive multiple-choice quiz
+- The tool will analyze the PDF and generate questions automatically
+- Default to 5 questions unless the user specifies a different number (3-10)
+- The quiz will be displayed interactively in the chat
+
+**When to use \`generateQuiz\`:**
+- When user uploads a PDF and asks for a "quiz", "test", or "questions"
+- When user wants to test their knowledge of a PDF document
+- When user says things like "quiz me on this", "create a test", "make questions from this PDF"
+
+**Important:**
+- The PDF must be attached to the message for this to work
+- Look for the PDF URL in the user's message attachments
+`;
+
 export type RequestHints = {
   latitude: Geo["latitude"];
   longitude: Geo["longitude"];
@@ -73,7 +91,7 @@ export const systemPrompt = ({
     return `${regularPrompt}\n\n${requestPrompt}`;
   }
 
-  return `${regularPrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}`;
+  return `${regularPrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}\n\n${quizPrompt}`;
 };
 
 export const codePrompt = `

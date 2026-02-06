@@ -7,6 +7,7 @@ import { cn, sanitizeText } from "@/lib/utils";
 import { useDataStream } from "./data-stream-provider";
 import { DocumentToolResult } from "./document";
 import { DocumentPreview } from "./document-preview";
+import { QuizResult } from "./quiz/quiz-result";
 import { MessageContent } from "./elements/message";
 import { Response } from "./elements/response";
 import {
@@ -336,6 +337,52 @@ const PurePreviewMessage = ({
                           )
                         }
                       />
+                    )}
+                  </ToolContent>
+                </Tool>
+              );
+            }
+
+            if (type === "tool-generateQuiz") {
+              const { toolCallId, state } = part;
+
+              if (state === "output-available") {
+                if (part.output && "error" in part.output) {
+                  return (
+                    <div
+                      className="w-full max-w-2xl rounded-lg border border-red-200 bg-red-50 p-4 text-red-500 dark:bg-red-950/50"
+                      key={toolCallId}
+                    >
+                      Error generating quiz: {String(part.output.error)}
+                    </div>
+                  );
+                }
+
+                return (
+                  <QuizResult
+                    key={toolCallId}
+                    quizId={part.output?.id}
+                    title={part.output?.title}
+                    questionCount={part.output?.questionCount}
+                    quiz={part.output?.quiz}
+                  />
+                );
+              }
+
+              return (
+                <Tool className="w-full max-w-2xl" defaultOpen={true} key={toolCallId}>
+                  <ToolHeader state={state} type="tool-generateQuiz" />
+                  <ToolContent>
+                    {(state === "input-available" || state === "streaming") && (
+                      <div className="px-4 py-3">
+                        <ToolInput input={part.input} />
+                        {state === "streaming" && (
+                          <div className="mt-2 flex items-center gap-2 text-muted-foreground text-sm">
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                            Generating quiz from PDF...
+                          </div>
+                        )}
+                      </div>
                     )}
                   </ToolContent>
                 </Tool>
