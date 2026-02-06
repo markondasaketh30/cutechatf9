@@ -114,7 +114,8 @@ export const {
         });
       }
     },
-    async signOut({ token }) {
+    async signOut(params) {
+      const token = "token" in params ? params.token : null;
       if (token?.sessionToken) {
         // Delete the session from database
         await deleteSession(token.sessionToken as string);

@@ -127,6 +127,9 @@ export async function POST(request: Request) {
             parts: message.parts,
             attachments: [],
             createdAt: new Date(),
+            messageType: "text",
+            readAt: null,
+            deliveredAt: null,
           },
         ],
       });
@@ -209,6 +212,9 @@ export async function POST(request: Request) {
                     createdAt: new Date(),
                     attachments: [],
                     chatId: id,
+                    messageType: "text",
+                    readAt: null,
+                    deliveredAt: null,
                   },
                 ],
               });
@@ -223,6 +229,9 @@ export async function POST(request: Request) {
               createdAt: new Date(),
               attachments: [],
               chatId: id,
+              messageType: "text",
+              readAt: null,
+              deliveredAt: null,
             })),
           });
         }

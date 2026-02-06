@@ -29,37 +29,6 @@ async function geocodeCity(
   }
 }
 
-import { tool } from "ai";
-import { z } from "zod";
-
-async function geocodeCity(
-  city: string
-): Promise<{ latitude: number; longitude: number } | null> {
-  try {
-    const response = await fetch(
-      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`
-    );
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = await response.json();
-
-    if (!data.results || data.results.length === 0) {
-      return null;
-    }
-
-    const result = data.results[0];
-    return {
-      latitude: result.latitude,
-      longitude: result.longitude,
-    };
-  } catch {
-    return null;
-  }
-}
-
 async function executeGetWeather(input: {
   latitude?: number;
   longitude?: number;

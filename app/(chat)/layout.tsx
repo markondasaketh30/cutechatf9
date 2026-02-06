@@ -6,8 +6,6 @@ import { DataStreamProvider } from "@/components/data-stream-provider";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { auth } from "../(auth)/auth";
 
-import { AI } from "./ai";
-
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <>
@@ -16,11 +14,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         strategy="beforeInteractive"
       />
       <DataStreamProvider>
-        <AI>
-          <Suspense fallback={<div className="flex h-dvh" />}>
-            <SidebarWrapper>{children}</SidebarWrapper>
-          </Suspense>
-        </AI>
+        <Suspense fallback={<div className="flex h-dvh" />}>
+          <SidebarWrapper>{children}</SidebarWrapper>
+        </Suspense>
       </DataStreamProvider>
     </>
   );
